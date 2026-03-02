@@ -38,7 +38,7 @@ Tkinter (usually included with Python)
 
 Installation Clone the repository:
 
-bash git clone https://github.com/chongyukwai/heap-data-structure.git
+bash git clone https://github.com/chongyukwai/OOPanddata/tree/main/heap%20and%20heap%20sort
 cd heap-data-structure Run the application:
 
 bash python heapandheapsort.py 📖 Usage Guide Heap Operations Tab Insert - Add
@@ -76,18 +76,6 @@ Animate insert/extract operations
 
 Color-coded nodes for different heap types
 
-🧮 Time Complexities Operation Best Case Average Case Worst Case Insert
-O(1) O(log n) O(log n) Extract O(log n) O(log n) O(log n) Build Heap
-O(n) O(n) O(n) Heap Sort O(n log n) O(n log n) O(n log n) Peek O(1) O(1)
-O(1) 🎯 Key Algorithms Sift Up (Insert) python while i \> 0 and
-heap\[i\] \> heap\[parent(i)\]: swap(i, parent(i)) i = parent(i) Sift
-Down (Extract) python while True: extreme = i if left \< n and
-heap\[left\] \> heap\[extreme\]: extreme = left if right \< n and
-heap\[right\] \> heap\[extreme\]: extreme = right if extreme == i: break
-swap(i, extreme) i = extreme Build Heap (Floyd\'s Algorithm) python for
-i in range(n//2 - 1, -1, -1): heapify(i) 🎨 GUI Features Color-coded
-elements - Red for Max Heap, Purple for Min Heap
-
 Real-time statistics - Size, comparisons, swaps
 
 Tree visualization - See heap structure graphically
@@ -123,13 +111,6 @@ Add new heap variants (Binomial, Fibonacci)
 Implement additional operations (decrease-key, merge)
 
 Add more visualization options
-
-Create custom examples
-
-📝 Code Structure text heap_gui.py ├── Heap (Base Class) │ ├── MaxHeap │
-└── MinHeap ├── PriorityQueue ├── HeapSort ├── HeapVisualizer └──
-HeapGUI (Main Application) 🤝 Contributing Contributions are welcome!
-Please feel free to submit a Pull Request.
 
 📄 License This project is licensed under the MIT License - see the
 LICENSE file for details.
