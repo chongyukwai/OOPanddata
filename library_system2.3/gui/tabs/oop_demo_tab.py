@@ -73,13 +73,7 @@ class OOPDemoTab(ttk.Frame):
            def title(self):
                return self._title
            
-           @title.setter
-           def title(self, value):
-               if not value:
-                   raise ValueError("Title cannot be empty")
-               self._title = value
-           ```
-        
+                   
         
         3. 🎭 POLYMORPHISM
            ────────────────────────────────────────────────────────────
