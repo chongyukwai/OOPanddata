@@ -1,0 +1,54 @@
+library_management/
+│
+├── main.py
+│
+├── models/
+│   ├── __init__.py
+│   ├── base.py
+│   ├── items/
+│   │   ├── __init__.py
+│   │   ├── base_item.py
+│   │   ├── book.py
+│   │   ├── ebook.py
+│   │   └── magazine.py
+│   └── users/
+│       ├── __init__.py
+│       ├── base_user.py
+│       ├── library_user.py
+│       └── librarian.py
+│
+├── services/
+│   ├── __init__.py
+│   ├── library_service.py
+│   └── exceptions.py
+│
+├── utils/
+│   ├── __init__.py
+│   ├── validators.py
+│   └── decorators.py
+│
+├── gui/
+│   ├── __init__.py
+│   ├── main_window.py
+│   ├── tabs/
+│   │   ├── __init__.py
+│   │   ├── dashboard_tab.py
+│   │   ├── catalog_tab.py
+│   │   ├── users_tab.py
+│   │   ├── borrow_tab.py
+│   │   └── oop_demo_tab.py
+│   ├── dialogs/
+│   │   ├── __init__.py
+│   │   ├── add_item_dialog.py
+│   │   ├── register_dialog.py
+│   │   ├── search_dialog.py
+│   │   └── user_details_dialog.py
+│   └── components/
+│       ├── __init__.py
+│       ├── header.py
+│       ├── status_bar.py
+│       └── item_tree.py
+│
+└── config/
+    ├── __init__.py
+    └── styles.py
