@@ -38,7 +38,7 @@ Tkinter (usually included with Python)
 
 Installation Clone the repository:
 
-bash git clone https://github.com/yourusername/heap-data-structure.git
+bash git clone https://github.com/chongyukwai/heap-data-structure.git
 cd heap-data-structure Run the application:
 
 bash python heap_gui.py 📖 Usage Guide Heap Operations Tab Insert - Add
