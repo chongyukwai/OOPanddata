@@ -41,7 +41,7 @@ Installation Clone the repository:
 bash git clone https://github.com/chongyukwai/heap-data-structure.git
 cd heap-data-structure Run the application:
 
-bash python heap_gui.py 📖 Usage Guide Heap Operations Tab Insert - Add
+bash python heapandheapsort.py 📖 Usage Guide Heap Operations Tab Insert - Add
 values to the heap
 
 Extract - Remove root element (max/min)
