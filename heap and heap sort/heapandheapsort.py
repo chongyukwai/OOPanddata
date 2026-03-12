@@ -372,7 +372,7 @@ class PriorityQueue:
 
 
 # ============================================================================
-# HEAP SORT IMPLEMENTATION
+# HEAP SORT IMPLEMENTATION (FIXED VERSION)
 # ============================================================================
 
 class HeapSort:
@@ -395,30 +395,35 @@ class HeapSort:
             left = 2 * i + 1
             right = 2 * i + 2
             
+            # Compare with left child
             if left < n:
                 comparisons += 1
                 if (ascending and arr[left] > arr[largest]) or (not ascending and arr[left] < arr[largest]):
                     largest = left
             
+            # Compare with right child
             if right < n:
                 comparisons += 1
                 if (ascending and arr[right] > arr[largest]) or (not ascending and arr[right] < arr[largest]):
                     largest = right
             
+            # If largest is not root, swap and continue heapifying
             if largest != i:
                 arr[i], arr[largest] = arr[largest], arr[i]
                 swaps += 1
-                heapify(arr, n, largest)
+                heapify(arr, n, largest)  # Fixed: removed the extra argument
         
-        # Build heap
+        # Build heap (rearrange array)
         for i in range(n // 2 - 1, -1, -1):
             heapify(arr, n, i)
         
-        # Extract elements
+        # One by one extract elements from heap
         for i in range(n - 1, 0, -1):
+            # Move current root to end
             arr[i], arr[0] = arr[0], arr[i]
             swaps += 1
-            heapify(arr, i, 0, ascending)
+            # Call heapify on the reduced heap
+            heapify(arr, i, 0)  # Fixed: removed the extra argument
         
         return arr, comparisons, swaps
     
@@ -441,21 +446,24 @@ class HeapSort:
             left = 2 * i + 1
             right = 2 * i + 2
             
+            # Compare with left child
             if left < n:
                 comparisons += 1
                 if (ascending and arr[left] > arr[largest]) or (not ascending and arr[left] < arr[largest]):
                     largest = left
             
+            # Compare with right child
             if right < n:
                 comparisons += 1
                 if (ascending and arr[right] > arr[largest]) or (not ascending and arr[right] < arr[largest]):
                     largest = right
             
+            # If largest is not root, swap and continue heapifying
             if largest != i:
                 arr[i], arr[largest] = arr[largest], arr[i]
                 swaps += 1
                 steps.append(f"  Swapped {arr[i]} and {arr[largest]}: {arr}")
-                heapify(arr, n, largest)
+                heapify(arr, n, largest)  # Fixed: removed the extra argument
         
         # Build heap
         steps.append(f"Building {'max' if ascending else 'min'} heap:")
@@ -470,7 +478,7 @@ class HeapSort:
             arr[i], arr[0] = arr[0], arr[i]
             swaps += 1
             steps.append(f"  Moved root to position {i}: {arr}")
-            heapify(arr, i, 0)
+            heapify(arr, i, 0)  # Fixed: removed the extra argument
         
         if not ascending:
             arr.reverse()
