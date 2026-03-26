@@ -9,6 +9,7 @@ from tkinter import ttk, messagebox, scrolledtext
 import random
 import time
 import math
+from datetime import datetime, timedelta
 
 # ============================================================================
 # HEAP DATA STRUCTURE IMPLEMENTATIONS
@@ -372,6 +373,137 @@ class PriorityQueue:
 
 
 # ============================================================================
+# REAL-LIFE EXAMPLE: Task Management System for Software Development Team
+# ============================================================================
+
+class Task:
+    """Task class for the software development team example"""
+    
+    def __init__(self, task_id, title, priority, estimated_hours, developer, deadline):
+        self.task_id = task_id
+        self.title = title
+        self.priority = priority  # 1-10, 10 being highest
+        self.estimated_hours = estimated_hours
+        self.developer = developer
+        self.deadline = deadline
+        self.status = "Pending"
+        self.created_at = datetime.now()
+        
+    def get_priority_score(self):
+        """Calculate priority score based on priority and deadline urgency"""
+        days_until_deadline = (self.deadline - datetime.now()).days
+        urgency_score = max(0, 10 - days_until_deadline) if days_until_deadline > 0 else 10
+        # Combined score: priority (60%) + urgency (40%)
+        return (self.priority * 0.6) + (urgency_score * 0.4)
+    
+    def __lt__(self, other):
+        """For comparison in heap sort"""
+        return self.get_priority_score() < other.get_priority_score()
+    
+    def __gt__(self, other):
+        """For comparison in heap sort"""
+        return self.get_priority_score() > other.get_priority_score()
+    
+    def __str__(self):
+        deadline_str = self.deadline.strftime("%Y-%m-%d")
+        return f"#{self.task_id}: {self.title} (Priority: {self.priority}, Hours: {self.estimated_hours}, Dev: {self.developer}, Due: {deadline_str})"
+
+
+class TaskManagementSystem:
+    """Real-life example: Task management system using heap sort for prioritization"""
+    
+    def __init__(self):
+        self.tasks = []
+        self.completed_tasks = []
+        
+    def add_task(self, task):
+        """Add a new task"""
+        self.tasks.append(task)
+        return f"Task '{task.title}' added successfully"
+    
+    def prioritize_tasks(self):
+        """Use heap sort to prioritize tasks based on combined priority score"""
+        if not self.tasks:
+            return []
+        
+        # Convert tasks to list of (priority_score, task) tuples for sorting
+        task_scores = [(task.get_priority_score(), task) for task in self.tasks]
+        
+        # Use heap sort to sort by priority score
+        n = len(task_scores)
+        
+        # Build max heap
+        for i in range(n // 2 - 1, -1, -1):
+            self._heapify(task_scores, n, i)
+        
+        # Extract elements one by one
+        sorted_tasks = []
+        for i in range(n - 1, 0, -1):
+            task_scores[i], task_scores[0] = task_scores[0], task_scores[i]
+            sorted_tasks.append(task_scores[i])
+            self._heapify(task_scores, i, 0)
+        
+        sorted_tasks.append(task_scores[0])
+        
+        # Extract tasks from tuples
+        return [task for score, task in reversed(sorted_tasks)]
+    
+    def _heapify(self, arr, n, i):
+        """Heapify subtree rooted at index i"""
+        largest = i
+        left = 2 * i + 1
+        right = 2 * i + 2
+        
+        if left < n and arr[left][0] > arr[largest][0]:
+            largest = left
+        
+        if right < n and arr[right][0] > arr[largest][0]:
+            largest = right
+        
+        if largest != i:
+            arr[i], arr[largest] = arr[largest], arr[i]
+            self._heapify(arr, n, largest)
+    
+    def complete_task(self, task_id):
+        """Mark a task as completed"""
+        for i, task in enumerate(self.tasks):
+            if task.task_id == task_id:
+                task.status = "Completed"
+                self.completed_tasks.append(task)
+                del self.tasks[i]
+                return f"Task #{task_id} completed!"
+        return "Task not found"
+    
+    def get_task_report(self):
+        """Generate a report of prioritized tasks"""
+        prioritized = self.prioritize_tasks()
+        if not prioritized:
+            return "No pending tasks"
+        
+        report = "=" * 80 + "\n"
+        report += "PRIORITIZED TASK LIST (Sorted by Priority Score)\n"
+        report += "=" * 80 + "\n\n"
+        
+        for i, task in enumerate(prioritized, 1):
+            report += f"{i}. {task}\n"
+            report += f"   Priority Score: {task.get_priority_score():.2f}\n"
+            report += f"   Status: {task.status}\n\n"
+        
+        if self.completed_tasks:
+            report += "\n" + "=" * 80 + "\n"
+            report += f"COMPLETED TASKS ({len(self.completed_tasks)})\n"
+            report += "=" * 80 + "\n"
+            for task in self.completed_tasks:
+                report += f"✓ {task.title} (Completed)\n"
+        
+        return report
+    
+    def get_tasks_by_priority(self):
+        """Get tasks sorted by priority using heap sort"""
+        return self.prioritize_tasks()
+
+
+# ============================================================================
 # HEAP SORT IMPLEMENTATION (FIXED VERSION)
 # ============================================================================
 
@@ -411,7 +543,7 @@ class HeapSort:
             if largest != i:
                 arr[i], arr[largest] = arr[largest], arr[i]
                 swaps += 1
-                heapify(arr, n, largest)  # Fixed: removed the extra argument
+                heapify(arr, n, largest)
         
         # Build heap (rearrange array)
         for i in range(n // 2 - 1, -1, -1):
@@ -423,7 +555,7 @@ class HeapSort:
             arr[i], arr[0] = arr[0], arr[i]
             swaps += 1
             # Call heapify on the reduced heap
-            heapify(arr, i, 0)  # Fixed: removed the extra argument
+            heapify(arr, i, 0)
         
         return arr, comparisons, swaps
     
@@ -463,7 +595,7 @@ class HeapSort:
                 arr[i], arr[largest] = arr[largest], arr[i]
                 swaps += 1
                 steps.append(f"  Swapped {arr[i]} and {arr[largest]}: {arr}")
-                heapify(arr, n, largest)  # Fixed: removed the extra argument
+                heapify(arr, n, largest)
         
         # Build heap
         steps.append(f"Building {'max' if ascending else 'min'} heap:")
@@ -478,7 +610,7 @@ class HeapSort:
             arr[i], arr[0] = arr[0], arr[i]
             swaps += 1
             steps.append(f"  Moved root to position {i}: {arr}")
-            heapify(arr, i, 0)  # Fixed: removed the extra argument
+            heapify(arr, i, 0)
         
         if not ascending:
             arr.reverse()
@@ -575,6 +707,10 @@ class HeapGUI:
         self.priority_queue = PriorityQueue('max')
         self.processed_tasks = []
         
+        # Task management system
+        self.task_system = TaskManagementSystem()
+        self.next_task_id = 1
+        
         # Colors
         self.setup_colors()
         
@@ -619,6 +755,7 @@ class HeapGUI:
         self.create_heap_operations_tab()
         self.create_heap_sort_tab()
         self.create_priority_queue_tab()
+        self.create_real_life_example_tab()  # New real-life example tab
         self.create_visualization_tab()
         self.create_examples_tab()
         self.create_comparison_tab()
@@ -858,6 +995,111 @@ class HeapGUI:
         
         self.processed_text = scrolledtext.ScrolledText(processed_frame, height=20, font=('Courier', 10))
         self.processed_text.pack(fill=tk.BOTH, expand=True)
+    
+    def create_real_life_example_tab(self):
+        """NEW TAB: Real-life example - Task Management System using Heap Sort"""
+        tab = ttk.Frame(self.notebook)
+        self.notebook.add(tab, text="🏢 Task Manager (Real Life)")
+        
+        # Control frame
+        control_frame = ttk.LabelFrame(tab, text="📋 Task Management System - Software Development Team", padding="10")
+        control_frame.pack(fill=tk.X, pady=5)
+        
+        # Task input frame
+        task_input_frame = ttk.Frame(control_frame)
+        task_input_frame.pack(fill=tk.X, pady=5)
+        
+        # Title
+        ttk.Label(task_input_frame, text="Task Title:").grid(row=0, column=0, padx=5, pady=2, sticky=tk.W)
+        self.task_title_entry = ttk.Entry(task_input_frame, width=30)
+        self.task_title_entry.grid(row=0, column=1, padx=5, pady=2)
+        
+        # Priority
+        ttk.Label(task_input_frame, text="Priority (1-10):").grid(row=1, column=0, padx=5, pady=2, sticky=tk.W)
+        self.task_priority = ttk.Spinbox(task_input_frame, from_=1, to=10, width=10)
+        self.task_priority.set(5)
+        self.task_priority.grid(row=1, column=1, padx=5, pady=2, sticky=tk.W)
+        
+        # Estimated hours
+        ttk.Label(task_input_frame, text="Est. Hours:").grid(row=2, column=0, padx=5, pady=2, sticky=tk.W)
+        self.task_hours = ttk.Spinbox(task_input_frame, from_=1, to=100, width=10)
+        self.task_hours.set(8)
+        self.task_hours.grid(row=2, column=1, padx=5, pady=2, sticky=tk.W)
+        
+        # Developer
+        ttk.Label(task_input_frame, text="Developer:").grid(row=3, column=0, padx=5, pady=2, sticky=tk.W)
+        self.task_developer = ttk.Combobox(task_input_frame, values=["John", "Sarah", "Mike", "Emma", "David"], width=27)
+        self.task_developer.set("John")
+        self.task_developer.grid(row=3, column=1, padx=5, pady=2)
+        
+        # Deadline (days from now)
+        ttk.Label(task_input_frame, text="Deadline (days):").grid(row=4, column=0, padx=5, pady=2, sticky=tk.W)
+        self.task_deadline_days = ttk.Spinbox(task_input_frame, from_=1, to=30, width=10)
+        self.task_deadline_days.set(7)
+        self.task_deadline_days.grid(row=4, column=1, padx=5, pady=2, sticky=tk.W)
+        
+        # Buttons
+        button_frame = ttk.Frame(task_input_frame)
+        button_frame.grid(row=5, column=0, columnspan=2, pady=10)
+        
+        ttk.Button(button_frame, text="➕ Add Task", command=self.add_real_task,
+                  style='Action.TButton').pack(side=tk.LEFT, padx=5)
+        ttk.Button(button_frame, text="✅ Complete Selected", command=self.complete_selected_task,
+                  style='Action.TButton').pack(side=tk.LEFT, padx=5)
+        ttk.Button(button_frame, text="🎯 Prioritize Tasks", command=self.show_prioritized_tasks,
+                  style='Success.TButton').pack(side=tk.LEFT, padx=5)
+        
+        # Example datasets
+        example_frame = ttk.Frame(control_frame)
+        example_frame.pack(fill=tk.X, pady=5)
+        
+        ttk.Label(example_frame, text="Load Examples:").pack(side=tk.LEFT, padx=5)
+        ttk.Button(example_frame, text="Sprint Planning", 
+                  command=self.load_sprint_example,
+                  style='Example.TButton').pack(side=tk.LEFT, padx=2)
+        ttk.Button(example_frame, text="Bug Fixes", 
+                  command=self.load_bug_fix_example,
+                  style='Example.TButton').pack(side=tk.LEFT, padx=2)
+        ttk.Button(example_frame, text="Feature Development", 
+                  command=self.load_feature_example,
+                  style='Example.TButton').pack(side=tk.LEFT, padx=2)
+        
+        # Display frames
+        display_frame = ttk.Frame(tab)
+        display_frame.pack(fill=tk.BOTH, expand=True, pady=5)
+        
+        # Task list with Treeview
+        list_frame = ttk.LabelFrame(display_frame, text="📊 Task List", padding="10")
+        list_frame.pack(fill=tk.BOTH, expand=True, padx=5)
+        
+        # Create Treeview
+        columns = ('ID', 'Title', 'Priority', 'Hours', 'Developer', 'Deadline', 'Priority Score')
+        self.task_tree = ttk.Treeview(list_frame, columns=columns, show='headings', height=12)
+        
+        self.task_tree.heading('ID', text='ID')
+        self.task_tree.heading('Title', text='Title')
+        self.task_tree.heading('Priority', text='Priority')
+        self.task_tree.heading('Hours', text='Hours')
+        self.task_tree.heading('Developer', text='Developer')
+        self.task_tree.heading('Deadline', text='Deadline')
+        self.task_tree.heading('Priority Score', text='Priority Score')
+        
+        self.task_tree.column('ID', width=50)
+        self.task_tree.column('Title', width=250)
+        self.task_tree.column('Priority', width=70)
+        self.task_tree.column('Hours', width=70)
+        self.task_tree.column('Developer', width=100)
+        self.task_tree.column('Deadline', width=100)
+        self.task_tree.column('Priority Score', width=100)
+        
+        self.task_tree.pack(fill=tk.BOTH, expand=True)
+        
+        # Report area
+        report_frame = ttk.LabelFrame(display_frame, text="📄 Priority Report", padding="10")
+        report_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        
+        self.report_text = scrolledtext.ScrolledText(report_frame, height=10, font=('Courier', 10))
+        self.report_text.pack(fill=tk.BOTH, expand=True)
     
     def create_visualization_tab(self):
         """Tab for heap visualization"""
@@ -1241,6 +1483,167 @@ class HeapGUI:
                 self.processed_text.insert(tk.END, f"  • {task} at {timestamp}\n")
         else:
             self.processed_text.insert(tk.END, "No processed tasks")
+    
+    # ========== REAL-LIFE EXAMPLE FUNCTIONS ==========
+    
+    def add_real_task(self):
+        """Add a task to the task management system"""
+        title = self.task_title_entry.get().strip()
+        if not title:
+            messagebox.showwarning("Warning", "Please enter a task title")
+            return
+        
+        try:
+            priority = int(self.task_priority.get())
+            hours = int(self.task_hours.get())
+            developer = self.task_developer.get()
+            days = int(self.task_deadline_days.get())
+            
+            deadline = datetime.now() + timedelta(days=days)
+            
+            task = Task(self.next_task_id, title, priority, hours, developer, deadline)
+            self.task_system.add_task(task)
+            self.next_task_id += 1
+            
+            self.update_task_display()
+            self.task_title_entry.delete(0, tk.END)
+            
+            messagebox.showinfo("Success", f"Task '{title}' added successfully!")
+            
+        except ValueError:
+            messagebox.showerror("Error", "Please enter valid numbers")
+    
+    def complete_selected_task(self):
+        """Complete the selected task"""
+        selected = self.task_tree.selection()
+        if not selected:
+            messagebox.showwarning("Warning", "Please select a task to complete")
+            return
+        
+        item = self.task_tree.item(selected[0])
+        task_id = int(item['values'][0])
+        
+        result = self.task_system.complete_task(task_id)
+        messagebox.showinfo("Success", result)
+        self.update_task_display()
+    
+    def show_prioritized_tasks(self):
+        """Show prioritized tasks using heap sort"""
+        self.report_text.delete(1.0, tk.END)
+        report = self.task_system.get_task_report()
+        self.report_text.insert(1.0, report)
+        
+        # Show explanation of how heap sort was used
+        self.report_text.insert(tk.END, "\n\n" + "="*80 + "\n")
+        self.report_text.insert(tk.END, "🔍 HOW HEAP SORT WAS USED:\n")
+        self.report_text.insert(tk.END, "="*80 + "\n")
+        self.report_text.insert(tk.END, "1. Each task's priority score was calculated based on:\n")
+        self.report_text.insert(tk.END, "   • Task priority (60% weight)\n")
+        self.report_text.insert(tk.END, "   • Deadline urgency (40% weight)\n\n")
+        self.report_text.insert(tk.END, "2. Heap sort algorithm (O(n log n)) was applied to:\n")
+        self.report_text.insert(tk.END, "   • Build a max heap of tasks by priority score\n")
+        self.report_text.insert(tk.END, "   • Extract elements one by one\n")
+        self.report_text.insert(tk.END, "   • Produce tasks in order of importance\n\n")
+        self.report_text.insert(tk.END, "3. This helps the team focus on:\n")
+        self.report_text.insert(tk.END, "   • Critical tasks with high priority\n")
+        self.report_text.insert(tk.END, "   • Tasks approaching deadlines\n")
+        self.report_text.insert(tk.END, "   • Efficient resource allocation\n")
+    
+    def update_task_display(self):
+        """Update the task tree display"""
+        # Clear current items
+        for item in self.task_tree.get_children():
+            self.task_tree.delete(item)
+        
+        # Get prioritized tasks
+        prioritized_tasks = self.task_system.get_tasks_by_priority()
+        
+        # Add tasks to tree
+        for task in prioritized_tasks:
+            deadline_str = task.deadline.strftime("%Y-%m-%d")
+            priority_score = task.get_priority_score()
+            
+            self.task_tree.insert('', 'end', values=(
+                task.task_id,
+                task.title,
+                task.priority,
+                task.estimated_hours,
+                task.developer,
+                deadline_str,
+                f"{priority_score:.2f}"
+            ))
+    
+    def load_sprint_example(self):
+        """Load sprint planning example"""
+        self.task_system = TaskManagementSystem()
+        self.next_task_id = 1
+        
+        tasks = [
+            ("User Authentication", 9, 12, "Sarah", 5),
+            ("Database Optimization", 8, 8, "Mike", 7),
+            ("API Documentation", 5, 4, "Emma", 10),
+            ("UI Redesign", 7, 16, "John", 14),
+            ("Bug Fixes", 10, 6, "David", 2),
+            ("Performance Testing", 6, 8, "Sarah", 12),
+            ("Security Audit", 9, 10, "Mike", 9),
+            ("Code Review", 4, 4, "Emma", 5)
+        ]
+        
+        for title, priority, hours, dev, days in tasks:
+            deadline = datetime.now() + timedelta(days=days)
+            task = Task(self.next_task_id, title, priority, hours, dev, deadline)
+            self.task_system.add_task(task)
+            self.next_task_id += 1
+        
+        self.update_task_display()
+        messagebox.showinfo("Loaded", "Sprint planning tasks loaded successfully!")
+    
+    def load_bug_fix_example(self):
+        """Load bug fix example"""
+        self.task_system = TaskManagementSystem()
+        self.next_task_id = 1
+        
+        tasks = [
+            ("Critical: Login Crash", 10, 4, "David", 1),
+            ("Major: Data Loss", 10, 8, "Mike", 2),
+            ("Medium: UI Glitch", 6, 3, "Emma", 5),
+            ("Minor: Typo", 3, 1, "John", 7),
+            ("High: Memory Leak", 9, 12, "Sarah", 3),
+            ("Medium: Performance Issue", 7, 6, "David", 4)
+        ]
+        
+        for title, priority, hours, dev, days in tasks:
+            deadline = datetime.now() + timedelta(days=days)
+            task = Task(self.next_task_id, title, priority, hours, dev, deadline)
+            self.task_system.add_task(task)
+            self.next_task_id += 1
+        
+        self.update_task_display()
+        messagebox.showinfo("Loaded", "Bug fix tasks loaded successfully!")
+    
+    def load_feature_example(self):
+        """Load feature development example"""
+        self.task_system = TaskManagementSystem()
+        self.next_task_id = 1
+        
+        tasks = [
+            ("Payment Integration", 9, 20, "Sarah", 14),
+            ("Social Media Sharing", 7, 12, "John", 10),
+            ("Analytics Dashboard", 8, 16, "Mike", 12),
+            ("Push Notifications", 6, 8, "Emma", 7),
+            ("Dark Mode", 5, 10, "David", 8),
+            ("Search Optimization", 8, 14, "Sarah", 11),
+            ("File Upload Feature", 7, 12, "Mike", 9)
+        ]
+        
+        for title, priority, hours, dev, days in tasks:
+            deadline = datetime.now() + timedelta(days=days)
+            task = Task(self.next_task_id, title, priority, hours, dev, deadline)
+            self.task_system.add_task(task)
+            self.next_task_id += 1
+        
+        self.update_task_display()
+        messagebox.showinfo("Loaded", "Feature development tasks loaded successfully!")
     
     # ========== VISUALIZATION ==========
     
