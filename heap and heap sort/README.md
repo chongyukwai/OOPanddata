@@ -38,8 +38,7 @@ Tkinter (usually included with Python)
 
 Installation Clone the repository:
 
-bash git clone https://github.com/chongyukwai/OOPanddata/tree/main/heap%20and%20heap%20sort
-cd heap%20and%20heap%20sort Run the application:
+https://downgit.github.io/#/home?url=https://github.com/chongyukwai/OOPanddata/tree/main/heap%20and%20heap%20sort
 
 bash python heapandheapsort.py 📖 Usage Guide Heap Operations Tab Insert - Add
 values to the heap
