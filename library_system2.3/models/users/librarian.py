@@ -1,5 +1,5 @@
 """
-Librarian model - demonstrates composition (has-a LibraryCard)
+Librarian model - demonstrates composition
 """
 from datetime import datetime
 
@@ -49,14 +49,20 @@ class Librarian(Person):
         self.employee_id = employee_id
         self.department = kwargs.get('department', 'General')
         self.hire_date = kwargs.get('hire_date', datetime.now())
+        self.borrowed_items = kwargs.get('borrowed_items', [])
+        self.fines_owed = kwargs.get('fines_owed', 0.0)
         
-        # Composition: Librarian HAS-A LibraryCard
         card_number = kwargs.get('card_number', f"LIB-{employee_id}")
         self._library_card = self.LibraryCard(
             card_number=card_number,
             issue_date=self.hire_date,
             access_level=kwargs.get('access_level', 'Full')
         )
+    
+    @property
+    def max_borrow_limit(self) -> int:
+        """Librarians can borrow up to 20 items"""
+        return 20
     
     @property
     def library_card(self):
@@ -66,13 +72,6 @@ class Librarian(Person):
     def manage_item(self, item, action: str) -> str:
         """
         Perform management actions on library items
-        
-        Args:
-            item: Library item to manage
-            action: Action to perform (add, remove, update)
-            
-        Returns:
-            Status message
         """
         actions = {
             "add": "➕ added to catalog",
@@ -98,6 +97,8 @@ class Librarian(Person):
                 f"🏢 Department: {self.department}\n"
                 f"📅 Hired: {self.hire_date.strftime('%Y-%m-%d')}\n"
                 f"🪪 {self.library_card}\n"
+                f"📚 Borrowed: {len(self.borrowed_items)}/{self.max_borrow_limit}\n"
+                f"💰 Fines: ${self.fines_owed:.2f}\n"
                 f"📊 Card Status: {card_valid}")
     
     def to_dict(self) -> dict:
@@ -107,6 +108,8 @@ class Librarian(Person):
             'employee_id': self.employee_id,
             'department': self.department,
             'hire_date': self.hire_date.isoformat() if self.hire_date else None,
+            'borrowed_items': [item.item_id for item in self.borrowed_items],
+            'fines_owed': self.fines_owed,
             'card_number': self.library_card.card_number,
             'access_level': self.library_card.access_level,
             'user_type': 'librarian'

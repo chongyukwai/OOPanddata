@@ -50,13 +50,18 @@ class Person(BaseModel):
 
 
 # models/users/borrower.py
+
+"""
+Borrower mixin class for borrowing functionality
+"""
 from datetime import datetime, timedelta
+
 
 class Borrower:
     """Borrower mixin class for borrowing functionality"""
     
     def __init__(self):
-        self.borrowed_items = []
+        self.borrowed_items = []  # This creates the list
         self._max_borrow_limit = 5  # Default limit
     
     @property
@@ -88,6 +93,5 @@ class Borrower:
         if item in self.borrowed_items:
             self.borrowed_items.remove(item)
             item.due_date = None
-            item.is_available = True
             return True
         return False

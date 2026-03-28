@@ -21,6 +21,7 @@ class BorrowTab(ttk.Frame):
         self.app = app
         self.configure(style='Card.TFrame')
         self.current_mode = "borrow"  # Default mode
+        self._shown_return_message = False  # Track if we've shown the return message
         
         self.create_widgets()
     
@@ -110,7 +111,7 @@ class BorrowTab(ttk.Frame):
         self.tree.column('Title', width=250)
         self.tree.column('Type', width=100)
         self.tree.column('Author/Publisher', width=200)
-        self.tree.column('Status', width=100)
+        self.tree.column('Status', width=150)
         self.tree.column('Due Date', width=100)
         
         # Add scrollbar
@@ -215,30 +216,66 @@ class BorrowTab(ttk.Frame):
                 self.tree.delete(item)
             self.all_items = []
             self.user_label.config(text="No user selected", fg=Colors.DANGER)
+            self.mode_label.config(text="Current Mode: No User Selected", fg=Colors.DANGER)
+            self.action_btn.config(state='disabled')
+            self.info_label.config(text="Please select a user from the Users tab")
     
     def show_available_items(self):
         """Show all available items for borrowing"""
         self.current_mode = "borrow"
-        self.mode_label.config(text="Current Mode: Borrow Items", fg=Colors.ACCENT)
+        self._shown_return_message = False  # Reset the message flag
+        
+        # Check if user is selected
+        if not self.app.current_user:
+            self.user_label.config(text="No user selected", fg=Colors.DANGER)
+            self.mode_label.config(text="Current Mode: Borrow Items", fg=Colors.ACCENT)
+            self.action_btn.config(text="📤 Borrow Selected Item", style='Primary.TButton', state='disabled')
+            self.info_label.config(text="Please select a user from the Users tab")
+            
+            # Clear tree
+            for item in self.tree.get_children():
+                self.tree.delete(item)
+            self.all_items = []
+            return
+        
+        # Store reference to current user
+        current_user = self.app.current_user
+        
+        if hasattr(current_user, 'employee_id'):
+            self.mode_label.config(text="Current Mode: Borrow Items (Librarian View)", fg=Colors.ACCENT)
+            self.info_label.config(text="Librarians can borrow up to 20 items (14-day borrowing period)")
+            self.action_btn.config(state='normal')
+        else:
+            self.mode_label.config(text="Current Mode: Borrow Items (User View)", fg=Colors.ACCENT)
+            limit = current_user.max_borrow_limit if current_user else 5
+            
+            # Check if user is Basic member
+            if hasattr(current_user, 'membership_level') and current_user.membership_level == "Basic":
+                self.info_label.config(
+                    text=f"⚠️ Basic members ({current_user.name}) cannot borrow items. Please upgrade to Premium membership.", 
+                    fg=Colors.DANGER
+                )
+                # Disable the borrow button for Basic users
+                self.action_btn.config(state='disabled')
+            else:
+                self.info_label.config(text=f"Premium members can borrow up to {limit} items (14-day borrowing period)")
+                self.action_btn.config(state='normal')
+        
         self.action_btn.config(text="📤 Borrow Selected Item", style='Primary.TButton')
-        self.info_label.config(text="Double-click or select and click button to borrow (14-day borrowing period)")
         
         # Clear tree and stored items
         for item in self.tree.get_children():
             self.tree.delete(item)
         self.all_items = []
         
-        # Check if user is selected
-        if not self.app.current_user:
-            self.user_label.config(text="No user selected", fg=Colors.DANGER)
-            self.tree.insert('', tk.END, values=('', 'Please select a user first', '', '', '', ''))
-            return
-        
         # Update user label
-        if hasattr(self.app.current_user, 'user_id'):
-            user_text = f"Current User: {self.app.current_user.name} (ID: {self.app.current_user.user_id})"
+        if hasattr(current_user, 'user_id'):
+            user_text = f"Current User: {current_user.name} (ID: {current_user.user_id})"
+        elif hasattr(current_user, 'employee_id'):
+            user_text = f"Current Librarian: {current_user.name} (ID: {current_user.employee_id})"
         else:
-            user_text = f"Current User: {self.app.current_user.name} (Employee ID: {self.app.current_user.employee_id})"
+            user_text = f"Current User: {current_user.name}"
+        
         self.user_label.config(text=user_text, fg=Colors.SUCCESS)
         
         # Get available items
@@ -280,36 +317,84 @@ class BorrowTab(ttk.Frame):
     def show_borrowed_items(self):
         """Show items borrowed by current user"""
         self.current_mode = "return"
-        self.mode_label.config(text="Current Mode: Return Items", fg=Colors.WARNING)
-        self.action_btn.config(text="📥 Return Selected Item", style='Secondary.TButton')
-        self.info_label.config(text="Double-click or select and click button to return")
+        
+        # Check if user is selected
+        if not self.app.current_user:
+            self.user_label.config(text="No user selected", fg=Colors.DANGER)
+            self.mode_label.config(text="Current Mode: Return Items", fg=Colors.WARNING)
+            self.action_btn.config(text="📥 Return Selected Item", style='Secondary.TButton', state='disabled')
+            self.info_label.config(text="Please select a user from the Users tab")
+            
+            # Clear tree
+            for item in self.tree.get_children():
+                self.tree.delete(item)
+            self.all_items = []
+            return
+        
+        # Store reference to current user
+        current_user = self.app.current_user
+        print(f"DEBUG - show_borrowed_items for user: {current_user.name}")
+        
+        # Update based on user type
+        if hasattr(current_user, 'employee_id'):
+            self.mode_label.config(text="Current Mode: Return Items (Librarian View)", fg=Colors.WARNING)
+            self.info_label.config(text=f"Librarian {current_user.name} can return items")
+        else:
+            self.mode_label.config(text="Current Mode: Return Items (User View)", fg=Colors.WARNING)
+            self.info_label.config(text="Double-click or select and click button to return")
+        
+        self.action_btn.config(text="📥 Return Selected Item", style='Secondary.TButton', state='normal')
         
         # Clear tree and stored items
         for item in self.tree.get_children():
             self.tree.delete(item)
         self.all_items = []
         
-        # Check if user is selected
-        if not self.app.current_user:
-            self.user_label.config(text="No user selected", fg=Colors.DANGER)
-            self.tree.insert('', tk.END, values=('', 'No user selected', '', '', '', ''))
-            return
-        
-        # Update user label
-        if hasattr(self.app.current_user, 'user_id'):
-            user_text = f"Current User: {self.app.current_user.name} (ID: {self.app.current_user.user_id})"
+        # Update user label with user type
+        if hasattr(current_user, 'user_id'):
+            user_text = f"Current User: {current_user.name} (ID: {current_user.user_id})"
+            user_type = "Regular User"
+            limit = current_user.max_borrow_limit
+        elif hasattr(current_user, 'employee_id'):
+            user_text = f"Current Librarian: {current_user.name} (ID: {current_user.employee_id})"
+            user_type = "Librarian"
+            limit = current_user.max_borrow_limit
         else:
-            user_text = f"Current User: {self.app.current_user.name} (Employee ID: {self.app.current_user.employee_id})"
+            user_text = f"Current User: {current_user.name}"
+            user_type = "Unknown"
+            limit = 0
+        
         self.user_label.config(text=user_text, fg=Colors.SUCCESS)
         
         # Check if user has borrowed items
-        if not hasattr(self.app.current_user, 'borrowed_items') or not self.app.current_user.borrowed_items:
-            self.info_label.config(text=f"{self.app.current_user.name} has no borrowed items", fg=Colors.INFO)
+        if not hasattr(current_user, 'borrowed_items') or not current_user.borrowed_items:
+            self.info_label.config(
+                text=f"{current_user.name} has no borrowed items. All items returned!", 
+                fg=Colors.INFO
+            )
             self.tree.insert('', tk.END, values=('', 'No borrowed items', '', '', '', ''))
+            
+            # Show a message that all items are returned (but only once)
+            if not self._shown_return_message:
+                messagebox.showinfo(
+                    "All Items Returned", 
+                    f"{current_user.name} has returned all items.\n\n"
+                    f"You can now switch to Borrow mode to borrow new items."
+                )
+                self._shown_return_message = True
             return
+        else:
+            self._shown_return_message = False
+        
+        # Update info with count
+        borrowed_count = len(current_user.borrowed_items)
+        self.info_label.config(
+            text=f"{current_user.name} ({user_type}) has {borrowed_count}/{limit} items borrowed",
+            fg=Colors.INFO
+        )
         
         # Add borrowed items to tree and store for filtering
-        for item in self.app.current_user.borrowed_items:
+        for item in current_user.borrowed_items:
             # Get author/publisher based on item type
             if hasattr(item, 'author'):
                 author_publisher = item.author
@@ -319,12 +404,16 @@ class BorrowTab(ttk.Frame):
                 author_publisher = "N/A"
             
             # Check if overdue
-            status = "❌ Borrowed"
+            status = "📖 Borrowed"
             due_date_str = ""
             if hasattr(item, 'due_date') and item.due_date:
                 due_date_str = item.due_date.strftime("%Y-%m-%d")
                 if datetime.now() > item.due_date:
-                    status = "⚠️ Overdue"
+                    days_overdue = (datetime.now() - item.due_date).days
+                    status = f"⚠️ Overdue ({days_overdue} days)"
+                else:
+                    days_left = (item.due_date - datetime.now()).days
+                    status = f"✅ On Time ({days_left} days left)"
             
             item_data = {
                 'id': item.item_id,
@@ -351,20 +440,33 @@ class BorrowTab(ttk.Frame):
             messagebox.showwarning("No User", "Please select a user first")
             return
         
+        # Store reference to current user
+        current_user = self.app.current_user
+        print(f"DEBUG - perform_action for user: {current_user.name}, mode: {self.current_mode}")
+        
+        # Check if user is Basic member trying to borrow
+        if (self.current_mode == "borrow" and 
+            hasattr(current_user, 'membership_level') and 
+            current_user.membership_level == "Basic"):
+            messagebox.showerror(
+                "Cannot Borrow", 
+                f"❌ Basic members ({current_user.name}) are not allowed to borrow items.\n\n"
+                "Please upgrade to Premium membership to borrow items."
+            )
+            return
+        
         # Get selected item
         selection = self.tree.selection()
         if not selection:
             messagebox.showwarning("No Selection", "Please select an item")
             return
         
-        # Get item ID from selection
         item_values = self.tree.item(selection[0])['values']
         if not item_values or len(item_values) < 1:
             return
         
         item_id = item_values[0]
         
-        # Verify this is an item ID
         if not item_id.startswith(('BK', 'EB', 'MG')):
             messagebox.showerror("Error", f"Invalid item ID format: {item_id}. Please select a valid item.")
             return
@@ -415,6 +517,14 @@ class BorrowTab(ttk.Frame):
     
     def borrow_item(self, item_id):
         """Borrow an item - handles different return types"""
+        if not self.app.current_user:
+            messagebox.showerror("Error", "No user selected")
+            return
+        
+        # Store reference to current user
+        current_user = self.app.current_user
+        print(f"DEBUG - borrow_item for user: {current_user.name}")
+        
         # Verify item ID format
         if not item_id or not isinstance(item_id, str):
             messagebox.showerror("Error", f"Invalid item ID: {item_id}")
@@ -441,9 +551,15 @@ class BorrowTab(ttk.Frame):
             return
         
         try:
+            # Check if user can borrow more items
+            if len(current_user.borrowed_items) >= current_user.max_borrow_limit:
+                limit = current_user.max_borrow_limit
+                messagebox.showerror("Error", f"Cannot borrow more than {limit} items")
+                return
+            
             # Call the library service method
-            print(f"Attempting to borrow item {item_id} for user {self.app.current_user.name}")
-            result = self.app.library.borrow_item(item_id, self.app.current_user)
+            print(f"Attempting to borrow item {item_id} for user {current_user.name}")
+            result = self.app.library.borrow_item(item_id, current_user)
             
             # Debug print to see what's returned
             print(f"Borrow result: {result}, Type: {type(result)}")
@@ -463,6 +579,10 @@ class BorrowTab(ttk.Frame):
             
             if success:
                 messagebox.showinfo("Success", message)
+                # Ensure user is still set
+                if self.app.current_user is None:
+                    print("DEBUG - Current user was lost, restoring...")
+                    self.app.current_user = current_user
                 # Refresh the display
                 self.show_available_items()
                 # Update dashboard if it exists
@@ -470,6 +590,10 @@ class BorrowTab(ttk.Frame):
                     self.app.dashboard_tab.refresh_stats()
                 # Clear search
                 self.clear_search()
+                # Update status bar
+                if hasattr(self.app, 'status_bar'):
+                    self.app.status_bar.set_user(self.app.current_user)
+                    self.app.status_bar.set_message(f"✅ {message}")
             else:
                 messagebox.showerror("Error", message)
                 
@@ -487,6 +611,15 @@ class BorrowTab(ttk.Frame):
 
     def return_item(self, item_id):
         """Return an item - handles different return types"""
+        if not self.app.current_user:
+            messagebox.showerror("Error", "No user selected")
+            return
+        
+        # Store reference to current user before any operation
+        current_user = self.app.current_user
+        print(f"DEBUG - return_item started for user: {current_user.name}")
+        print(f"DEBUG - User ID: {getattr(current_user, 'user_id', getattr(current_user, 'employee_id', 'Unknown'))}")
+        
         # Verify item ID format
         if not item_id or not isinstance(item_id, str):
             messagebox.showerror("Error", f"Invalid item ID: {item_id}")
@@ -498,10 +631,12 @@ class BorrowTab(ttk.Frame):
         
         # Find the item from user's borrowed items
         item = None
-        if hasattr(self.app.current_user, 'borrowed_items'):
-            for borrowed_item in self.app.current_user.borrowed_items:
+        if hasattr(current_user, 'borrowed_items'):
+            print(f"DEBUG - User has {len(current_user.borrowed_items)} borrowed items")
+            for borrowed_item in current_user.borrowed_items:
                 if borrowed_item.item_id == item_id:
                     item = borrowed_item
+                    print(f"DEBUG - Found item: {item.title}")
                     break
         
         if not item:
@@ -510,8 +645,8 @@ class BorrowTab(ttk.Frame):
         
         try:
             # Call the library service method
-            print(f"Attempting to return item {item_id} for user {self.app.current_user.name}")
-            result = self.app.library.return_item(item_id, self.app.current_user)
+            print(f"Attempting to return item {item_id} for user {current_user.name}")
+            result = self.app.library.return_item(item_id, current_user)
             
             # Debug print to see what's returned
             print(f"Return result: {result}, Type: {type(result)}")
@@ -531,13 +666,31 @@ class BorrowTab(ttk.Frame):
             
             if success:
                 messagebox.showinfo("Success", message)
-                # Refresh the display
-                self.show_borrowed_items()
+                
+                # IMPORTANT: Ensure the current user is still set
+                if self.app.current_user is None:
+                    print("DEBUG - Current user was lost, restoring...")
+                    self.app.current_user = current_user
+                else:
+                    print(f"DEBUG - Current user still set: {self.app.current_user.name}")
+                
+                # Refresh the display based on current mode
+                if self.current_mode == "return":
+                    self.show_borrowed_items()
+                else:
+                    self.show_available_items()
+                
                 # Update dashboard if it exists
                 if hasattr(self.app, 'dashboard_tab'):
                     self.app.dashboard_tab.refresh_stats()
+                
                 # Clear search
                 self.clear_search()
+                
+                # Update status bar
+                if hasattr(self.app, 'status_bar'):
+                    self.app.status_bar.set_user(self.app.current_user)
+                    self.app.status_bar.set_message(f"✅ {message}")
             else:
                 messagebox.showerror("Error", message)
                 

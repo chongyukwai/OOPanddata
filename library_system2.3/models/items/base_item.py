@@ -32,6 +32,7 @@ class LibraryItem(BaseModel, ABC):
         self._is_available = True
         self._checkout_date: Optional[datetime] = None
         self._checkout_user_id: Optional[str] = None
+        self.due_date: Optional[datetime] = None  # Add due_date attribute
         
         LibraryItem.total_items += 1
     
@@ -120,7 +121,8 @@ class LibraryItem(BaseModel, ABC):
             'item_id': self._item_id,
             'is_available': self._is_available,
             'checkout_date': self._checkout_date.isoformat() if self._checkout_date else None,
-            'checkout_user_id': self._checkout_user_id
+            'checkout_user_id': self._checkout_user_id,
+            'due_date': self.due_date.isoformat() if self.due_date else None
         })
         return data
     

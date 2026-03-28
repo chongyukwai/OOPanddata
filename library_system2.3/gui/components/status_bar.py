@@ -60,10 +60,13 @@ class StatusBar(tk.Frame):
         # Update user display if there's a current user
         if hasattr(self.app, 'current_user') and self.app.current_user:
             user = self.app.current_user
-            self.user_label.config(
-                text=f"👤 Current: {user.name} ({user.membership_level if hasattr(user, 'membership_level') else 'Staff'})",
-                fg=Colors.SUCCESS
-            )
+            if hasattr(user, 'user_id'):
+                user_text = f"👤 Current: {user.name} ({user.membership_level})"
+            elif hasattr(user, 'employee_id'):
+                user_text = f"👤 Current: {user.name} (Librarian)"
+            else:
+                user_text = f"👤 Current: {user.name}"
+            self.user_label.config(text=user_text, fg=Colors.SUCCESS)
         else:
             self.user_label.config(text="👤 No user selected", fg=Colors.WHITE)
     
@@ -76,9 +79,14 @@ class StatusBar(tk.Frame):
     def set_user(self, user):
         """Set current user display"""
         if user:
-            self.user_label.config(
-                text=f"👤 Current: {user.name} ({user.membership_level if hasattr(user, 'membership_level') else 'Staff'})",
-                fg=Colors.SUCCESS
-            )
+            if hasattr(user, 'user_id'):
+                user_text = f"👤 Current: {user.name} ({user.membership_level})"
+            elif hasattr(user, 'employee_id'):
+                user_text = f"👤 Current: {user.name} (Librarian)"
+            else:
+                user_text = f"👤 Current: {user.name}"
+            self.user_label.config(text=user_text, fg=Colors.SUCCESS)
+            print(f"DEBUG - Status bar updated with user: {user.name}")
         else:
             self.user_label.config(text="👤 No user selected", fg=Colors.WHITE)
+            print(f"DEBUG - Status bar cleared")

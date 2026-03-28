@@ -3,6 +3,7 @@ Users Tab - Manage and select users
 """
 import tkinter as tk
 from tkinter import ttk, messagebox
+from datetime import datetime
 
 from config.styles import Colors, Fonts
 from models.users.library_user import LibraryUser
@@ -22,7 +23,7 @@ class UsersTab(ttk.Frame):
         self.refresh_user_list()
         
         # Select a default user after the UI is created
-        self.after(100, self.select_default_user)  # Wait 100ms for UI to fully load
+        self.after(100, self.select_default_user)
     
     def create_widgets(self):
         """Create user management widgets"""
@@ -74,10 +75,10 @@ class UsersTab(ttk.Frame):
         self.user_tree.column('ID', width=80)
         self.user_tree.column('Name', width=150)
         self.user_tree.column('Email', width=180)
-        self.user_tree.column('Membership', width=80)
+        self.user_tree.column('Membership', width=120)
         self.user_tree.column('Borrowed', width=70)
         self.user_tree.column('Fines', width=70)
-        self.user_tree.column('Status', width=100)
+        self.user_tree.column('Status', width=120)
         
         # Add scrollbar
         scrollbar = ttk.Scrollbar(list_frame, orient=tk.VERTICAL,
@@ -125,33 +126,47 @@ class UsersTab(ttk.Frame):
                   style='Secondary.TButton').pack(side=tk.RIGHT, padx=5)
     
     def select_default_user(self):
-        """Select the first user as default"""
+        """Select Alice as the default user"""
         try:
             # Get all users
             users = self.app.library.get_all_users()
             
             if users:
-                # Select the first user
-                default_user = users[0]
+                # Find Alice by name
+                alice = None
+                for user in users:
+                    if user.name == "Alice Johnson":
+                        alice = user
+                        break
                 
-                # Set as current user
-                self.app.set_current_user(default_user)
-                
-                # Update labels
-                self.selected_user_label.config(
-                    text=f"Current User: {default_user.name} ({default_user.membership_level})",
-                    fg=Colors.SUCCESS
-                )
-                
-                # Find and highlight the user in the tree
-                self.highlight_user_in_tree(default_user.user_id)
-                
-                # Update status bar - use set_message instead of set_status
-                if hasattr(self.app, 'status_bar'):
-                    self.app.status_bar.set_message(f"✅ Default user selected: {default_user.name}")
-                    self.app.status_bar.set_user(default_user)
-                
-                print(f"Default user selected: {default_user.name}")
+                if alice:
+                    # Set as current user
+                    self.app.set_current_user(alice)
+                    
+                    # Update labels
+                    self.selected_user_label.config(
+                        text=f"Current User: {alice.name} ({alice.membership_level})",
+                        fg=Colors.SUCCESS
+                    )
+                    
+                    # Find and highlight the user in the tree
+                    self.highlight_user_in_tree(alice.user_id)
+                    
+                    # Update status bar
+                    if hasattr(self.app, 'status_bar'):
+                        self.app.status_bar.set_message(f"✅ Default user selected: {alice.name}")
+                        self.app.status_bar.set_user(alice)
+                    
+                    print(f"Default user selected: {alice.name}")
+                else:
+                    # If Alice not found, select first user
+                    default_user = users[0]
+                    self.app.set_current_user(default_user)
+                    self.selected_user_label.config(
+                        text=f"Current User: {default_user.name} ({default_user.membership_level})",
+                        fg=Colors.SUCCESS
+                    )
+                    self.highlight_user_in_tree(default_user.user_id)
             else:
                 print("No users found to select as default")
                 if hasattr(self.app, 'status_bar'):
@@ -169,8 +184,8 @@ class UsersTab(ttk.Frame):
             item_values = self.user_tree.item(item)['values']
             if item_values and item_values[0] == user_id:
                 self.user_tree.selection_set(item)
-                self.user_tree.see(item)  # Scroll to the item
-                self.user_tree.focus(item)  # Set focus to the item
+                self.user_tree.see(item)
+                self.user_tree.focus(item)
                 break
     
     def create_context_menu(self):
@@ -191,7 +206,6 @@ class UsersTab(ttk.Frame):
     
     def show_context_menu(self, event):
         """Show context menu on right-click"""
-        # Select the item under cursor
         item = self.user_tree.identify_row(event.y)
         if item:
             self.user_tree.selection_set(item)
@@ -201,7 +215,6 @@ class UsersTab(ttk.Frame):
         """Handle tree selection change"""
         selection = self.user_tree.selection()
         if selection:
-            # Get the selected item's values
             item_values = self.user_tree.item(selection[0])['values']
             if item_values:
                 self.selection_indicator.config(text=f"✓ Selected: {item_values[1]}")
@@ -227,29 +240,44 @@ class UsersTab(ttk.Frame):
             user_id = item_values[0]
             user_name = item_values[1]
             
-            # Get user from library
-            user = self.app.library.get_user(user_id)
+            # Check if it's a librarian
+            is_librarian = " (Librarian)" in user_name or user_id.startswith("EMP")
+            
+            # Get user/librarian from library
+            if is_librarian:
+                user = self.app.library.get_librarian(user_id)
+            else:
+                user = self.app.library.get_user(user_id)
+                
             if user:
                 # Set as current user
                 self.app.set_current_user(user)
                 
-                # Update labels
+                # Update labels based on user type
+                if hasattr(user, 'employee_id'):
+                    user_text = f"Current Librarian: {user.name} (Staff)"
+                    user_type_text = "Librarian"
+                else:
+                    user_text = f"Current User: {user.name} ({user.membership_level})"
+                    user_type_text = "User"
+                
                 self.selected_user_label.config(
-                    text=f"Current User: {user.name} ({user.membership_level})",
+                    text=user_text,
                     fg=Colors.SUCCESS
                 )
                 
-                # Update status if available - check if status_bar exists
+                # Update status bar
                 if hasattr(self.app, 'status_bar'):
-                    self.app.status_bar.set_message(f"✅ Selected user: {user.name}")
+                    self.app.status_bar.set_message(f"✅ Selected {user_type_text}: {user.name}")
                     self.app.status_bar.set_user(user)
-                elif hasattr(self.app, 'status_label'):
-                    self.app.status_label.config(text=f"Current User: {user.name}")
                 
-                # Optional: Highlight the selected row
+                # Highlight the selected row
                 self.user_tree.selection_set(item)
                 
-                print(f"User selected via double-click: {user.name}")
+                # Show success message
+                messagebox.showinfo("Success", f"Switched to {user_type_text}: {user.name}")
+                
+                print(f"User selected via double-click: {user.name} ({user_type_text})")
             else:
                 print(f"User not found: {user_id}")
                 if hasattr(self.app, 'status_bar'):
@@ -257,7 +285,6 @@ class UsersTab(ttk.Frame):
                     
         except Exception as e:
             print(f"Error in double-click handler: {e}")
-            # Safe error handling
             if hasattr(self.app, 'status_bar'):
                 self.app.status_bar.set_message(f"Error: {e}")
             messagebox.showerror("Error", f"Failed to select user: {e}")
@@ -268,13 +295,48 @@ class UsersTab(ttk.Frame):
         for item in self.user_tree.get_children():
             self.user_tree.delete(item)
         
-        # Get all users
+        # Get all regular users
         users = self.app.library.get_all_users()
         
-        # Add users to tree
+        # Get all librarians
+        librarians = self.app.library.get_all_librarians()
+        
+        # Add librarians to tree (with different tag)
+        for librarian in librarians:
+            # Determine status for librarians
+            overdue_count = 0
+            for item in librarian.borrowed_items:
+                if hasattr(item, 'due_date') and item.due_date and datetime.now() > item.due_date:
+                    overdue_count += 1
+            
+            if overdue_count > 0:
+                status = f"⚠️ {overdue_count} overdue"
+                tags = ('librarian_overdue',)
+            elif librarian.fines_owed > 0:
+                status = f"💰 ${librarian.fines_owed:.2f}"
+                tags = ('librarian_fines',)
+            else:
+                status = "👔 Active"
+                tags = ('librarian',)
+            
+            # Insert librarian
+            self.user_tree.insert('', tk.END,
+                                 values=(
+                                     librarian.employee_id,
+                                     librarian.name + " (Librarian)",
+                                     librarian.email,
+                                     "Staff",
+                                     f"{len(librarian.borrowed_items)}/{librarian.max_borrow_limit}",
+                                     f"{librarian.fines_owed:.2f}",
+                                     status
+                                 ),
+                                 tags=tags)
+        
+        # Add regular users to tree
         for user in users:
             # Determine status
             overdue_count = len(user.get_overdue_items()) if hasattr(user, 'get_overdue_items') else 0
+            
             if overdue_count > 0:
                 status = f"⚠️ {overdue_count} overdue"
                 tags = ('overdue',)
@@ -285,34 +347,54 @@ class UsersTab(ttk.Frame):
                 status = "✅ Active"
                 tags = ('active',)
             
+            # Add borrow status indicator for Basic users
+            if user.membership_level == "Basic":
+                membership_display = "Basic (Cannot Borrow)"
+                tags = ('basic',)
+            else:
+                membership_display = "Premium"
+            
             # Insert user
             self.user_tree.insert('', tk.END,
                                  values=(
                                      user.user_id,
                                      user.name,
                                      user.email,
-                                     user.membership_level,
-                                     f"{len(user.borrowed_items)}/{user.get_max_borrow_limit()}",
+                                     membership_display,
+                                     f"{len(user.borrowed_items)}/{user.max_borrow_limit}",
                                      f"{user.fines_owed:.2f}",
                                      status
                                  ),
                                  tags=tags)
         
         # Configure tag colors
+        self.user_tree.tag_configure('librarian', foreground='purple')
+        self.user_tree.tag_configure('librarian_overdue', foreground='darkred')
+        self.user_tree.tag_configure('librarian_fines', foreground='darkorange')
         self.user_tree.tag_configure('overdue', foreground='red')
         self.user_tree.tag_configure('fines', foreground='orange')
         self.user_tree.tag_configure('active', foreground='green')
+        self.user_tree.tag_configure('basic', foreground='gray')
         
         # Update current user display if exists
         if self.app.current_user:
+            if hasattr(self.app.current_user, 'user_id'):
+                user_text = f"Current User: {self.app.current_user.name} ({self.app.current_user.membership_level})"
+            elif hasattr(self.app.current_user, 'employee_id'):
+                user_text = f"Current Librarian: {self.app.current_user.name} (Staff)"
+            else:
+                user_text = f"Current: {self.app.current_user.name}"
+            
             self.selected_user_label.config(
-                text=f"Current User: {self.app.current_user.name} ({self.app.current_user.membership_level})",
+                text=user_text,
                 fg=Colors.SUCCESS
             )
             
             # Find and highlight the current user in the tree
             if hasattr(self.app.current_user, 'user_id'):
                 self.highlight_user_in_tree(self.app.current_user.user_id)
+            elif hasattr(self.app.current_user, 'employee_id'):
+                self.highlight_user_in_tree(self.app.current_user.employee_id)
     
     def filter_users(self):
         """Filter users based on search"""
@@ -322,8 +404,42 @@ class UsersTab(ttk.Frame):
         for item in self.user_tree.get_children():
             self.user_tree.delete(item)
         
-        # Get all users
+        # Get all users and librarians
         users = self.app.library.get_all_users()
+        librarians = self.app.library.get_all_librarians()
+        
+        # Filter and add librarians
+        for librarian in librarians:
+            if (keyword in librarian.name.lower() or 
+                keyword in librarian.email.lower() or 
+                keyword in librarian.employee_id.lower()):
+                
+                overdue_count = 0
+                for item in librarian.borrowed_items:
+                    if hasattr(item, 'due_date') and item.due_date and datetime.now() > item.due_date:
+                        overdue_count += 1
+                
+                if overdue_count > 0:
+                    status = f"⚠️ {overdue_count} overdue"
+                    tags = ('librarian_overdue',)
+                elif librarian.fines_owed > 0:
+                    status = f"💰 ${librarian.fines_owed:.2f}"
+                    tags = ('librarian_fines',)
+                else:
+                    status = "👔 Active"
+                    tags = ('librarian',)
+                
+                self.user_tree.insert('', tk.END,
+                                     values=(
+                                         librarian.employee_id,
+                                         librarian.name + " (Librarian)",
+                                         librarian.email,
+                                         "Staff",
+                                         f"{len(librarian.borrowed_items)}/{librarian.max_borrow_limit}",
+                                         f"{librarian.fines_owed:.2f}",
+                                         status
+                                     ),
+                                     tags=tags)
         
         # Filter and add users
         for user in users:
@@ -331,7 +447,6 @@ class UsersTab(ttk.Frame):
                 keyword in user.email.lower() or 
                 keyword in user.user_id.lower()):
                 
-                # Determine status
                 overdue_count = len(user.get_overdue_items()) if hasattr(user, 'get_overdue_items') else 0
                 if overdue_count > 0:
                     status = f"⚠️ {overdue_count} overdue"
@@ -343,22 +458,31 @@ class UsersTab(ttk.Frame):
                     status = "✅ Active"
                     tags = ('active',)
                 
-                # Insert user
+                # Add borrow status indicator for Basic users
+                if user.membership_level == "Basic":
+                    membership_display = "Basic (Cannot Borrow)"
+                    tags = ('basic',)
+                else:
+                    membership_display = "Premium"
+                
                 self.user_tree.insert('', tk.END,
                                      values=(
                                          user.user_id,
                                          user.name,
                                          user.email,
-                                         user.membership_level,
-                                         f"{len(user.borrowed_items)}/{user.get_max_borrow_limit()}",
+                                         membership_display,
+                                         f"{len(user.borrowed_items)}/{user.max_borrow_limit}",
                                          f"{user.fines_owed:.2f}",
                                          status
                                      ),
                                      tags=tags)
         
         # After filtering, try to highlight current user again
-        if self.app.current_user and hasattr(self.app.current_user, 'user_id'):
-            self.highlight_user_in_tree(self.app.current_user.user_id)
+        if self.app.current_user:
+            if hasattr(self.app.current_user, 'user_id'):
+                self.highlight_user_in_tree(self.app.current_user.user_id)
+            elif hasattr(self.app.current_user, 'employee_id'):
+                self.highlight_user_in_tree(self.app.current_user.employee_id)
     
     def add_user(self):
         """Add a new user"""
@@ -376,19 +500,35 @@ class UsersTab(ttk.Frame):
         # Get user ID from selected row
         item_values = self.user_tree.item(selection[0])['values']
         user_id = item_values[0]
+        user_name = item_values[1]
         
-        # Get user from library
-        user = self.app.library.get_user(user_id)
+        # Check if it's a librarian
+        is_librarian = " (Librarian)" in user_name or user_id.startswith("EMP")
+        
+        # Get user/librarian from library
+        if is_librarian:
+            user = self.app.library.get_librarian(user_id)
+        else:
+            user = self.app.library.get_user(user_id)
+            
         if user:
             self.app.set_current_user(user)
+            
+            if hasattr(user, 'employee_id'):
+                user_text = f"Current Librarian: {user.name} (Staff)"
+                user_type = "Librarian"
+            else:
+                user_text = f"Current User: {user.name} ({user.membership_level})"
+                user_type = "User"
+                
             self.selected_user_label.config(
-                text=f"Current User: {user.name} ({user.membership_level})",
+                text=user_text,
                 fg=Colors.SUCCESS
             )
             if hasattr(self.app, 'status_bar'):
-                self.app.status_bar.set_message(f"✅ Selected user: {user.name}")
+                self.app.status_bar.set_message(f"✅ Selected {user_type}: {user.name}")
                 self.app.status_bar.set_user(user)
-            messagebox.showinfo("Success", f"Selected user: {user.name}")
+            messagebox.showinfo("Success", f"Selected {user_type}: {user.name}")
     
     def view_user_details(self):
         """View selected user details"""
@@ -397,22 +537,29 @@ class UsersTab(ttk.Frame):
             messagebox.showwarning("No Selection", "Please select a user")
             return
         
-        # Get user ID from selected row
         item_values = self.user_tree.item(selection[0])['values']
         user_id = item_values[0]
+        user_name = item_values[1]
+        
+        # Check if it's a librarian
+        is_librarian = " (Librarian)" in user_name or user_id.startswith("EMP")
         
         try:
-            # Open user details dialog
-            dialog = UserDetailsDialog(self.app, user_id)
-            
-            # Check if dialog was created successfully
-            if hasattr(dialog, 'window') and dialog.window:
-                self.wait_window(dialog.window)
+            if is_librarian:
+                # Show librarian details
+                librarian = self.app.library.get_librarian(user_id)
+                if librarian:
+                    info = librarian.get_librarian_info()
+                    messagebox.showinfo("Librarian Details", info)
+            else:
+                # Open user details dialog for regular users
+                dialog = UserDetailsDialog(self.app, user_id)
+                if hasattr(dialog, 'window') and dialog.window:
+                    self.wait_window(dialog.window)
             
         except Exception as e:
             messagebox.showerror("Error", f"Failed to open user details: {e}")
         finally:
-            # Refresh the user list to show any changes
             self.refresh_user_list()
     
     def view_borrowed_items(self):
@@ -422,15 +569,22 @@ class UsersTab(ttk.Frame):
             messagebox.showwarning("No Selection", "Please select a user")
             return
         
-        # Get user ID from selected row
         item_values = self.user_tree.item(selection[0])['values']
         user_id = item_values[0]
+        user_name = item_values[1]
+        
+        # Check if it's a librarian
+        is_librarian = " (Librarian)" in user_name or user_id.startswith("EMP")
         
         # Switch to borrow tab
-        self.app.notebook.select(3)  # Index of borrow tab
+        self.app.notebook.select(3)
         
         # Select the user if not already selected
-        user = self.app.library.get_user(user_id)
+        if is_librarian:
+            user = self.app.library.get_librarian(user_id)
+        else:
+            user = self.app.library.get_user(user_id)
+            
         if user:
             self.app.set_current_user(user)
             messagebox.showinfo("Info", f"Viewing borrowed items for: {user.name}")
@@ -442,22 +596,29 @@ class UsersTab(ttk.Frame):
             messagebox.showwarning("No Selection", "Please select a user")
             return
         
-        # Get user ID from selected row
         item_values = self.user_tree.item(selection[0])['values']
         user_id = item_values[0]
+        user_name = item_values[1]
         
-        # Get user
-        user = self.app.library.get_user(user_id)
-        if not user:
-            return
+        # Check if it's a librarian
+        is_librarian = " (Librarian)" in user_name or user_id.startswith("EMP")
         
-        # Show fine management dialog
-        self.show_fine_dialog(user)
+        if is_librarian:
+            librarian = self.app.library.get_librarian(user_id)
+            if librarian:
+                self.show_fine_dialog(librarian, is_librarian=True)
+        else:
+            user = self.app.library.get_user(user_id)
+            if user:
+                self.show_fine_dialog(user, is_librarian=False)
     
-    def show_fine_dialog(self, user):
+    def show_fine_dialog(self, user, is_librarian=False):
         """Show dialog to manage fines"""
         dialog = tk.Toplevel(self.app.root)
-        dialog.title("Manage Fines")
+        if is_librarian:
+            dialog.title("Manage Librarian Fines")
+        else:
+            dialog.title("Manage User Fines")
         dialog.geometry("400x200")
         dialog.configure(bg=Colors.BACKGROUND)
         dialog.transient(self.app.root)
@@ -474,7 +635,8 @@ class UsersTab(ttk.Frame):
         main_frame.pack(fill=tk.BOTH, expand=True)
         
         # User info
-        tk.Label(main_frame, text=f"User: {user.name}",
+        user_type = "Librarian" if is_librarian else "User"
+        tk.Label(main_frame, text=f"{user_type}: {user.name}",
                 font=Fonts.HEADER,
                 bg=Colors.BACKGROUND,
                 fg=Colors.PRIMARY).pack(pady=(0, 10))
@@ -508,13 +670,14 @@ class UsersTab(ttk.Frame):
                     messagebox.showerror("Error", "Please enter a positive amount")
                     return
                     
-                success, message = user.pay_fines(amount)
-                if success:
-                    messagebox.showinfo("Success", message)
-                    self.refresh_user_list()
-                    dialog.destroy()
-                else:
-                    messagebox.showerror("Error", message)
+                if amount > user.fines_owed:
+                    messagebox.showerror("Error", f"Payment amount exceeds fines owed (${user.fines_owed:.2f})")
+                    return
+                
+                user.fines_owed -= amount
+                messagebox.showinfo("Success", f"Payment of ${amount:.2f} successful. Remaining fines: ${user.fines_owed:.2f}")
+                self.refresh_user_list()
+                dialog.destroy()
             except ValueError:
                 messagebox.showerror("Error", "Please enter a valid amount")
         

@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 
 # Add the project root directory to Python path
 current_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.dirname(current_dir)  # Go up one level from services/
+project_root = os.path.dirname(current_dir)
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
@@ -17,7 +17,6 @@ from models.items.ebook import EBook
 from models.items.magazine import Magazine
 from models.users.library_user import LibraryUser
 from models.users.librarian import Librarian
-from services.exceptions import ItemNotFoundException
 
 
 class LibraryService:
@@ -43,54 +42,92 @@ class LibraryService:
             return
             
         self._initialized = True
-        self._items: Dict[str, Any] = {}  # Store items by ID
-        self._users: Dict[str, LibraryUser] = {}  # Store regular users by user_id
-        self._librarians: Dict[str, Librarian] = {}  # Store librarians by employee_id
+        self._items: Dict[str, Any] = {}
+        self._users: Dict[str, LibraryUser] = {}
+        self._librarians: Dict[str, Librarian] = {}
         
-        # Initialize with sample data
         self._initialize_sample_data()
     
     def _initialize_sample_data(self):
         """Initialize with sample data for testing"""
-        # Add sample users - pass membership_level as keyword argument
-        user1 = LibraryUser("Alice Johnson", "alice@email.com", "USR001", membership_level="Premium")
-        user2 = LibraryUser("Bob Wilson", "bob@email.com", "USR002", membership_level="Basic")
-        user3 = LibraryUser("sad", "sd@link.edu.hk", "USR003", membership_level="Basic")
+        from datetime import datetime, timedelta
         
+        # Create items
+        items = []
+        for i in range(1, 11):
+            book = Book(
+                title=f"Python Programming Vol {i}",
+                item_id=f"BK{i:03d}",
+                author=f"Author {i}",
+                isbn=f"978-01348539{i:02d}",
+                pages=500 + i
+            )
+            self._items[book.item_id] = book
+            items.append(book)
+        
+        # Add ebooks
+        ebook1 = EBook("Advanced Python", "EB001", "Jane Smith", "978-0134853988", 720, 2.5, "PDF")
+        ebook2 = EBook("Python Data Science", "EB002", "Jake VanderPlas", "978-7654321", 450, 8.5, "EPUB")
+        self._items[ebook1.item_id] = ebook1
+        self._items[ebook2.item_id] = ebook2
+        items.extend([ebook1, ebook2])
+        
+        # Add magazines
+        magazine1 = Magazine("Tech Monthly", "MG001", 42, "Tech Media")
+        magazine2 = Magazine("Science Weekly", "MG002", 15, "Science Publications")
+        self._items[magazine1.item_id] = magazine1
+        self._items[magazine2.item_id] = magazine2
+        items.extend([magazine1, magazine2])
+        
+        # Create users
+        # Premium user - Alice (can borrow)
+        alice_items = [items[0], items[1], items[2]]
+        user1 = LibraryUser(
+            "Alice Johnson", 
+            "alice@email.com", 
+            "USR001", 
+            membership_level="Premium",
+            borrowed_items=alice_items
+        )
+        for item in alice_items:
+            item.due_date = datetime.now() + timedelta(days=14)
         self._users[user1.user_id] = user1
+        
+        # Basic user - Bob (cannot borrow)
+        user2 = LibraryUser("Bob Wilson", "bob@email.com", "USR002", membership_level="Basic")
         self._users[user2.user_id] = user2
+        
+        # Premium user - Charlie (can borrow)
+        charlie_items = [items[3], items[4]]
+        user3 = LibraryUser(
+            "Charlie Brown", 
+            "charlie@email.com", 
+            "USR003", 
+            membership_level="Premium",
+            borrowed_items=charlie_items
+        )
+        for item in charlie_items:
+            item.due_date = datetime.now() + timedelta(days=14)
         self._users[user3.user_id] = user3
         
-        # Add sample librarian
-        librarian = Librarian("John Smith", "john@library.com", "EMP001")
+        # Create librarian
+        librarian_items = [items[5], items[6], items[7], items[8], items[9]]
+        librarian = Librarian(
+            "Carol Davis", 
+            "carol@library.com", 
+            "EMP001",
+            borrowed_items=librarian_items
+        )
+        for i, item in enumerate(librarian_items):
+            if i < 3:
+                item.due_date = datetime.now() + timedelta(days=14)
+            else:
+                item.due_date = datetime.now() - timedelta(days=5)
         self._librarians[librarian.employee_id] = librarian
         
-        # Add sample items
-        book1 = Book("Python Programming", "BK001", "John Doe", "1234567890", 350)
-        book2 = Book("Data Structures", "BK002", "Jane Smith", "0987654321", 400)
-        ebook1 = EBook("Advanced Python", "EB001", "Jim Brown", "978-1234567", 350, 5.2, "PDF")
-        magazine1 = Magazine("Tech Monthly", "MG001", 42, "Tech Media", publication_date="2024-01")
-        
-        self._items[book1.item_id] = book1
-        self._items[book2.item_id] = book2
-        self._items[ebook1.item_id] = ebook1
-        self._items[magazine1.item_id] = magazine1
-        
-        # Instead of trying to set is_available directly, we need to understand
-        # how the LibraryItem base class handles availability. Since is_available is a property
-        # without a setter, availability might be determined by other attributes.
-        
-        # For now, we'll just add items to the user's borrowed_items list
-        # This should be enough for the UI to show them as borrowed
-        user1.borrowed_items.append(book1)
-        user1.borrowed_items.append(ebook1)
-        
-        # Set due dates for testing
-        book1.due_date = datetime.now() + timedelta(days=14)
-        ebook1.due_date = datetime.now() + timedelta(days=7)
-        
-        # We're not trying to set is_available directly
-        # The is_available property might be computed based on whether the item has a due_date or is in someone's borrowed_items
+        # Add one more Basic user
+        user4 = LibraryUser("David Miller", "david@email.com", "USR004", membership_level="Basic")
+        self._users[user4.user_id] = user4
     
     def get_all_users(self) -> List[LibraryUser]:
         """Get all regular users"""
@@ -106,24 +143,15 @@ class LibraryService:
     
     def get_available_items(self) -> List[Any]:
         """Get all available items"""
-        # Since is_available is a property without a setter, we need to determine
-        # availability by checking if the item is in any user's borrowed_items list
         available_items = []
         for item in self._items.values():
-            is_borrowed = False
-            for user in self._users.values():
-                if item in user.borrowed_items:
-                    is_borrowed = True
-                    break
-            if not is_borrowed:
+            if self.is_item_available(item):
                 available_items.append(item)
         return available_items
     
     def get_user(self, user_id: str) -> Optional[LibraryUser]:
         """Get a user by ID"""
-        if user_id in self._users:
-            return self._users[user_id]
-        return None
+        return self._users.get(user_id)
     
     def get_librarian(self, employee_id: str) -> Optional[Librarian]:
         """Get a librarian by employee ID"""
@@ -159,33 +187,39 @@ class LibraryService:
     
     def find_item_by_id(self, item_id):
         """Find an item by its ID"""
-        if item_id in self._items:
-            return self._items[item_id]
-        return None
+        return self._items.get(item_id)
     
     def is_item_available(self, item):
-        """Check if an item is available by seeing if it's in any user's borrowed_items"""
+        """Check if an item is available"""
         for user in self._users.values():
             if item in user.borrowed_items:
+                return False
+        for librarian in self._librarians.values():
+            if item in librarian.borrowed_items:
                 return False
         return True
     
     def borrow_item(self, item_id, user):
         """Borrow an item"""
         try:
-            # Find the item using the dictionary
+            from datetime import datetime, timedelta
+            
             item = self._items.get(item_id)
             
             if not item:
                 return False, f"Item {item_id} not found"
             
-            # Check if item is available (not in any user's borrowed_items)
+            # Check if user is a Basic member
+            if hasattr(user, 'membership_level') and user.membership_level == "Basic":
+                return False, f"❌ Basic members ({user.name}) are not allowed to borrow items. Please upgrade to Premium membership."
+            
+            # Check if item is available
             if not self.is_item_available(item):
                 return False, f"Item {item_id} is not available"
             
             # Check if user can borrow more items
             if len(user.borrowed_items) >= user.max_borrow_limit:
-                return False, f"User {user.name} has reached maximum borrow limit"
+                return False, f"User {user.name} has reached maximum borrow limit of {user.max_borrow_limit}"
             
             # Add item to user's borrowed items
             user.borrowed_items.append(item)
@@ -201,7 +235,8 @@ class LibraryService:
     def return_item(self, item_id, user):
         """Return a borrowed item"""
         try:
-            # Find the item
+            from datetime import datetime
+            
             item = self._items.get(item_id)
             
             if not item:
@@ -218,7 +253,6 @@ class LibraryService:
             fine_message = ""
             if hasattr(item, 'due_date') and item.due_date:
                 if datetime.now() > item.due_date:
-                    # Calculate fine (e.g., $0.50 per day overdue)
                     days_overdue = (datetime.now() - item.due_date).days
                     fine_amount = days_overdue * 0.50
                     user.fines_owed += fine_amount
@@ -227,25 +261,37 @@ class LibraryService:
             # Clear the due date
             item.due_date = None
             
+            # Debug print to verify user still exists
+            print(f"DEBUG - After return, user: {user.name}, still has {len(user.borrowed_items)} items")
+            print(f"DEBUG - User object still valid: {user is not None}")
+            
             return True, f"Item '{item.title}' returned successfully.{fine_message}"
                 
         except Exception as e:
+            print(f"DEBUG - Error in return_item: {e}")
             return False, f"Error: {str(e)}"
     
     def pay_fines(self, user_id: str, amount: float) -> str:
         """Pay fines for a user"""
         user = self.get_user(user_id)
-        if not user:
-            return f"❌ User {user_id} not found"
+        if user:
+            if amount <= 0:
+                return "❌ Payment amount must be positive"
+            if amount > user.fines_owed:
+                return f"❌ Payment amount (${amount:.2f}) exceeds fines owed (${user.fines_owed:.2f})"
+            user.fines_owed -= amount
+            return f"✅ Payment of ${amount:.2f} successful. Remaining fines: ${user.fines_owed:.2f}"
         
-        if amount <= 0:
-            return "❌ Payment amount must be positive"
+        librarian = self.get_librarian(user_id)
+        if librarian:
+            if amount <= 0:
+                return "❌ Payment amount must be positive"
+            if amount > librarian.fines_owed:
+                return f"❌ Payment amount (${amount:.2f}) exceeds fines owed (${librarian.fines_owed:.2f})"
+            librarian.fines_owed -= amount
+            return f"✅ Payment of ${amount:.2f} successful. Remaining fines: ${librarian.fines_owed:.2f}"
         
-        if amount > user.fines_owed:
-            return f"❌ Payment amount (${amount:.2f}) exceeds fines owed (${user.fines_owed:.2f})"
-        
-        user.fines_owed -= amount
-        return f"✅ Payment of ${amount:.2f} successful. Remaining fines: ${user.fines_owed:.2f}"
+        return f"❌ User with ID {user_id} not found"
     
     def get_catalog_stats(self) -> Dict[str, int]:
         """Get catalog statistics"""
@@ -255,7 +301,6 @@ class LibraryService:
         
         total_items = len(self._items)
         
-        # Calculate available items by checking if they're in any user's borrowed_items
         available_items = 0
         for item in self._items.values():
             if self.is_item_available(item):
@@ -263,8 +308,8 @@ class LibraryService:
         
         borrowed_items = total_items - available_items
         total_users = len(self._users)
+        total_librarians = len(self._librarians)
         
-        # Add specific counts for each item type
         books = sum(1 for item in self._items.values() if isinstance(item, Book))
         ebooks = sum(1 for item in self._items.values() if isinstance(item, EBook))
         magazines = sum(1 for item in self._items.values() if isinstance(item, Magazine))
@@ -273,7 +318,7 @@ class LibraryService:
             'total_items': total_items,
             'available_items': available_items,
             'borrowed_items': borrowed_items,
-            'total_users': total_users,
+            'total_users': total_users + total_librarians,
             'books': books,
             'ebooks': ebooks,
             'magazines': magazines
@@ -284,26 +329,24 @@ class LibraryService:
         total_users = len(self._users)
         total_librarians = len(self._librarians)
         
-        # Calculate active users (users with borrowed items)
         active_users = sum(1 for user in self._users.values() if len(user.borrowed_items) > 0)
+        active_librarians = sum(1 for lib in self._librarians.values() if len(lib.borrowed_items) > 0)
         
-        # Calculate users with fines
         users_with_fines = sum(1 for user in self._users.values() if user.fines_owed > 0)
+        librarians_with_fines = sum(1 for lib in self._librarians.values() if lib.fines_owed > 0)
         
-        # Calculate total fines owed
         total_fines = sum(user.fines_owed for user in self._users.values())
+        total_fines += sum(lib.fines_owed for lib in self._librarians.values())
         
-        # Calculate membership distribution
-        membership_counts = {}
-        for user in self._users.values():
-            level = user.membership_level
-            membership_counts[level] = membership_counts.get(level, 0) + 1
+        premium_count = sum(1 for user in self._users.values() if user.membership_level == "Premium")
+        basic_count = sum(1 for user in self._users.values() if user.membership_level == "Basic")
         
         return {
             'total_users': total_users,
             'total_librarians': total_librarians,
-            'active_users': active_users,
-            'users_with_fines': users_with_fines,
+            'active_users': active_users + active_librarians,
+            'users_with_fines': users_with_fines + librarians_with_fines,
             'total_fines': total_fines,
-            'membership_distribution': membership_counts
+            'premium_users': premium_count,
+            'basic_users': basic_count
         }

@@ -51,48 +51,69 @@ class LibraryGUI:
         """Setup initial demo data"""
         from models.items import Book, EBook, Magazine
         from models.users import LibraryUser, Librarian
+        from datetime import datetime, timedelta
         
-        # Create demo items
-        book = Book(
-            title="Python Programming",
-            item_id="BK001",
-            author="John Doe",
-            isbn="978-0134853987",
-            pages=560
-        )
-        self.library.add_item(book)
+        # Create more demo items
+        items = []
+        for i in range(1, 11):
+            book = Book(
+                title=f"Python Programming Vol {i}",
+                item_id=f"BK{i:03d}",
+                author=f"Author {i}",
+                isbn=f"978-01348539{i:02d}",
+                pages=500 + i
+            )
+            self.library.add_item(book)
+            items.append(book)
         
-        ebook = EBook(
-            title="Advanced Python",
-            item_id="EB001",
-            author="Jane Smith",
-            isbn="978-0134853988",
-            pages=720,
-            file_size=2.5,
-            format="PDF"
-        )
-        self.library.add_item(ebook)
+        # Add ebooks
+        ebook1 = EBook("Advanced Python", "EB001", "Jane Smith", "978-0134853988", 720, 2.5, "PDF")
+        ebook2 = EBook("Python Data Science", "EB002", "Jake VanderPlas", "978-7654321", 450, 8.5, "EPUB")
+        self.library.add_item(ebook1)
+        self.library.add_item(ebook2)
+        items.extend([ebook1, ebook2])
         
-        magazine = Magazine(
-            title="Tech Monthly",
-            item_id="MG001",
-            issue_number=42,
-            publisher="Tech Media Inc."
-        )
-        self.library.add_item(magazine)
+        # Add magazines
+        magazine1 = Magazine("Tech Monthly", "MG001", 42, "Tech Media")
+        magazine2 = Magazine("Science Weekly", "MG002", 15, "Science Publications")
+        self.library.add_item(magazine1)
+        self.library.add_item(magazine2)
+        items.extend([magazine1, magazine2])
         
-        # Create demo users
-        user1 = LibraryUser("Alice Johnson", "alice@email.com", "USR001")
-        user1.membership_level = "Premium"
+        # Create users
+        # Premium user - Alice (can borrow)
+        user1 = LibraryUser("Alice Johnson", "alice@email.com", "USR001", membership_level="Premium")
+        for i in range(3):
+            user1.borrowed_items.append(items[i])
+            items[i].due_date = datetime.now() + timedelta(days=14)
         self.library.add_user(user1)
         
-        user2 = LibraryUser("Bob Wilson", "bob@email.com", "USR002")
+        # Basic user - Bob (cannot borrow)
+        user2 = LibraryUser("Bob Wilson", "bob@email.com", "USR002", membership_level="Basic")
         self.library.add_user(user2)
         
+        # Premium user - Charlie (can borrow)
+        user3 = LibraryUser("Charlie Brown", "charlie@email.com", "USR003", membership_level="Premium")
+        for i in range(3, 5):
+            user3.borrowed_items.append(items[i])
+            items[i].due_date = datetime.now() + timedelta(days=14)
+        self.library.add_user(user3)
+        
+        # Create librarian
         librarian = Librarian("Carol Davis", "carol@library.com", "EMP001")
+        for i in range(5, 10):
+            librarian.borrowed_items.append(items[i])
+            if i < 8:
+                items[i].due_date = datetime.now() + timedelta(days=14)
+            else:
+                items[i].due_date = datetime.now() - timedelta(days=5)
         self.library.add_librarian(librarian)
         
-        # Set default user
+        # Add one more Basic user
+        user4 = LibraryUser("David Miller", "david@email.com", "USR004", membership_level="Basic")
+        self.library.add_user(user4)
+        
+        # Set default user to Alice (Premium)
         self.current_user = user1
     
     def create_widgets(self):
@@ -200,11 +221,31 @@ class LibraryGUI:
     
     def set_current_user(self, user):
         """Set the current user"""
+        print(f"DEBUG - Setting current user to: {user.name if user else 'None'}")
         self.current_user = user
-        self.status_bar.set_user(user)
-        
-        # Update all tabs that depend on user
+    
+        if user:
+            self.status_bar.set_user(user)
+        # Update window title - handle both user types
+            if hasattr(user, 'user_id'):
+                title_text = f"Library Management System - {user.name} (User)"
+            elif hasattr(user, 'employee_id'):
+                title_text = f"Library Management System - {user.name} (Librarian)"
+            else:
+                title_text = f"Library Management System - {user.name}"
+        else:
+            self.status_bar.set_user(None)
+            title_text = "Library Management System"
+    
+        self.root.title(title_text)
+    
+    # Update all tabs that depend on user
         self.update_all_displays()
-        
-        # Update window title
-        self.root.title(f"Library Management System - {user.name}")
+    
+    # If this is called from somewhere, make sure the borrow tab knows
+        if hasattr(self, 'borrow_tab'):
+        # Don't automatically switch mode, just update the display
+            if self.borrow_tab.current_mode == "borrow":
+               self.borrow_tab.show_available_items()
+            else:
+               self.borrow_tab.show_borrowed_items()
