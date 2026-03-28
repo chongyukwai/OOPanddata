@@ -162,7 +162,7 @@ Custom Exceptions: Hierarchical exception classes
 
 User Management
 
-Register new users with different membership levels (Basic, Premium, VIP)
+Register new users with different membership levels (Basic, librarian)
 
 Switch between users
 
@@ -174,7 +174,7 @@ Catalog Management
 
 Browse all library items
 
-Search by title, author, or ID
+Search by title
 
 View item details
 
