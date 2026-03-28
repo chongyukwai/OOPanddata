@@ -214,9 +214,8 @@ Clone the repository:
 
 bash
 
-git clone https://github.com/chongyukwai/OOPanddata/tree/main/library\_system2.3
+git clone https://downgit.github.io/#/home?url=https://github.com/chongyukwai/OOPanddata/tree/main/library_system2.3
 
-cd library\_system2.3
 
 Run the application:
 
