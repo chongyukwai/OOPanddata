@@ -75,7 +75,7 @@ class RegisterDialog:
             self.user_type = tk.StringVar(value="Regular User")
             
             types = [
-                ("👤 Regular User (Can borrow items)", "Regular User"),
+                ("👤 Regular User ", "Regular User"),
                 ("👔 Librarian (Library staff)", "Librarian")
             ]
             

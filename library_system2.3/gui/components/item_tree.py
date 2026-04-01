@@ -21,7 +21,7 @@ class ItemTree(tk.Frame):
     def create_widgets(self):
         """Create treeview with scrollbars"""
         # Create treeview
-        columns = ('ID', 'Title', 'Type', 'Author', 'Status', 'Details')
+        columns = ('ID', 'Title', 'Type', 'Author', 'Details')
         self.tree = ttk.Treeview(self, columns=columns, show='tree headings')
         
         # Configure columns
@@ -33,7 +33,6 @@ class ItemTree(tk.Frame):
             'Title': 250,
             'Type': 100,
             'Author': 150,
-            'Status': 100,
             'Details': 150
         }
         
@@ -82,7 +81,6 @@ class ItemTree(tk.Frame):
         
         # Add to tree
         for i, item in enumerate(items, 1):
-            status = "✅ Available" if item.is_available else "❌ Borrowed"
             author = getattr(item, 'author', 'N/A')
             
             details = ""
@@ -98,7 +96,6 @@ class ItemTree(tk.Frame):
                 item.title,
                 item.__class__.__name__,
                 author,
-                status,
                 details
             )
             
