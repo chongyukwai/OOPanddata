@@ -120,6 +120,6 @@ Built for educational purposes
 
 Thanks to the Python and Tkinter communities
 Here is the introduction link
-https://youtu.be/M7xBCM-XSmM
+https://youtu.be/KvxFeSez6TA
 
 📧 Contact For questions or suggestions, please open an issue on GitHub.
