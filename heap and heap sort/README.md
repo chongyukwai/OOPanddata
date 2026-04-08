@@ -1,15 +1,8 @@
-Comprehensive Heap Data Structure & Algorithms A complete, educational
-implementation of heap data structures with an interactive GUI
-application for learning and experimentation.
+Comprehensive Heap Data Structure & Algorithms A complete, educational implementation of heap data structures with an interactive GUI application for learning and experimentation.
 
-📚 Overview This project provides a comprehensive implementation of heap
-data structures from scratch, including Max Heap, Min Heap, Priority
-Queue, and Heap Sort algorithms. It features an intuitive graphical user
-interface for visualizing heap operations and understanding the
-underlying algorithms.
+📚 Overview This project provides a comprehensive implementation of heap data structures from scratch, including Max Heap, Min Heap, Priority Queue, and Heap Sort algorithms. It features an intuitive graphical user interface for visualizing heap operations and understanding the underlying algorithms.
 
-✨ Features Core Implementations Max Heap - Complete implementation with
-all standard operations
+✨ Features Core Implementations Max Heap - Complete implementation with all standard operations
 
 Min Heap - Complete implementation with all standard operations
 
@@ -17,8 +10,7 @@ Priority Queue - Built on heap data structure
 
 Heap Sort - In-place sorting algorithm with step tracking
 
-Interactive GUI Tabs Heap Operations - Insert, extract, build, and
-visualize heaps
+Interactive GUI Tabs Heap Operations - Insert, extract, build, and visualize heaps
 
 Heap Sort - Sort arrays with step-by-step visualization
 
@@ -40,8 +32,7 @@ Installation Clone the repository:
 
 Click https://downgit.github.io/#/home?url=https://github.com/chongyukwai/OOPanddata/tree/main/heap%20and%20heap%20sort
 
-bash python heapandheapsort.py 📖 Usage Guide Heap Operations Tab Insert - Add
-values to the heap
+bash python heapandheapsort.py 📖 Usage Guide Heap Operations Tab Insert - Add values to the heap
 
 Extract - Remove root element (max/min)
 
@@ -111,16 +102,14 @@ Implement additional operations (decrease-key, merge)
 
 Add more visualization options
 
-📄 License This project is licensed under the MIT License - see the
-LICENSE file for details.
+📄 License This project is licensed under the MIT License - see the LICENSE file for details.
 
 🙏 Acknowledgments Inspired by classic data structures textbooks
 
 Built for educational purposes
 
-Thanks to the Python and Tkinter communities
-Here is the introduction link
+Thanks to the Python and Tkinter communities Here is the introduction link
 
-https://youtu.be/KvxFeSez6TA
+https://youtu.be/R2O7dM6M6fU
 
 📧 Contact For questions or suggestions, please open an issue on GitHub.
