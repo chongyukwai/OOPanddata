@@ -110,6 +110,6 @@ Built for educational purposes
 
 Thanks to the Python and Tkinter communities Here is the introduction link
 
-https://youtu.be/4u2drZnDv1g
+https://youtu.be/om7j9IYHbtI
 
 📧 Contact For questions or suggestions, please open an issue on GitHub.
