@@ -24,4 +24,5 @@ Run the application:
 bash
 
 python main.py
-
+Here is the introduction link.
+https://youtu.be/lPBHxfI9XiQ
