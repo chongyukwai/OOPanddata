@@ -12,7 +12,7 @@ Tkinter (usually included with Python)
 
 Installation
 
-Clone the repository:
+Clone the repository: decompress the file
 
 bash
 
