@@ -28,7 +28,7 @@ Analysis - Performance testing and complexity analysis
 
 Tkinter (usually included with Python)
 
-Installation Clone the repository:
+Installation Clone the repository:decompress the file
 
 Click https://downgit.github.io/#/home?url=https://github.com/chongyukwai/OOPanddata/tree/main/heap%20and%20heap%20sort
 Go to the directory of the file.
